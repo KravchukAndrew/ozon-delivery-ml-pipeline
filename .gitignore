@@ -17,3 +17,7 @@ mlruns/
 *.joblib
 
 .vscode/
+
+# Airflow local runtime
+.airflow-venv/
+airflow_home/
