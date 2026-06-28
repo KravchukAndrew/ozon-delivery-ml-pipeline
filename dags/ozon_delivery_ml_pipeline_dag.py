@@ -24,7 +24,7 @@ def make_bash_task(
     3. запускает нужную команду.
 
     Airflow стоит отдельно в .airflow-venv,
-    но ML/ETL-код запускается из .venv.
+    но ML/ETL/API-код запускается из .venv.
     """
     bash_command = f"""
 set -euo pipefail
@@ -74,7 +74,7 @@ with DAG(
         "retries": 1,
         "retry_delay": timedelta(minutes=1),
     },
-    tags=["ozon", "delivery", "ml", "spark", "grafana"],
+    tags=["ozon", "delivery", "ml", "spark", "grafana", "api"],
 ) as dag:
 
     start_docker_services = make_bash_task(
@@ -194,6 +194,16 @@ docker compose restart grafana
         timeout_minutes=10,
     )
 
+    restart_api = make_bash_task(
+        task_id="restart_api",
+        command="""
+docker compose restart api
+sleep 3
+curl -f http://localhost:8000/health
+""",
+        timeout_minutes=10,
+    )
+
     start_docker_services >> generate_data
 
     generate_data >> load_postgres
@@ -212,4 +222,4 @@ docker compose restart grafana
         publish_route_predictions,
     ] >> build_dashboard_tables
 
-    build_dashboard_tables >> regenerate_grafana_dashboard >> restart_grafana
+    build_dashboard_tables >> regenerate_grafana_dashboard >> [restart_grafana, restart_api]

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import redis
@@ -7,10 +8,13 @@ from fastapi import FastAPI, HTTPException, Query
 from sqlalchemy import create_engine, text
 
 
-POSTGRES_URL = "postgresql+psycopg2://ozon:ozon@127.0.0.1:5432/ozon"
+POSTGRES_URL = os.getenv(
+    "POSTGRES_URL",
+    "postgresql+psycopg2://ozon:ozon@127.0.0.1:5432/ozon",
+)
 
-REDIS_HOST = "127.0.0.1"
-REDIS_PORT = 6379
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 
 
 app = FastAPI(
@@ -19,7 +23,10 @@ app = FastAPI(
     version="0.1.0",
 )
 
-engine = create_engine(POSTGRES_URL)
+engine = create_engine(
+    POSTGRES_URL,
+    pool_pre_ping=True,
+)
 
 redis_client = redis.Redis(
     host=REDIS_HOST,
@@ -159,7 +166,7 @@ def get_top_risky_routes(
 
 @app.get("/metrics/summary")
 def get_metrics_summary() -> dict[str, Any]:
-    query = text(
+    delivery_query = text(
         """
         SELECT
             COALESCE(SUM(orders_count), 0) AS total_orders,
@@ -192,12 +199,12 @@ def get_metrics_summary() -> dict[str, Any]:
     )
 
     with engine.begin() as conn:
-        summary = row_to_dict(conn.execute(query).fetchone())
+        delivery = row_to_dict(conn.execute(delivery_query).fetchone())
         risk_buckets = [row_to_dict(row) for row in conn.execute(risk_query).fetchall()]
-        quality = row_to_dict(conn.execute(quality_query).fetchone())
+        model_quality = row_to_dict(conn.execute(quality_query).fetchone())
 
     return {
-        "delivery": summary,
+        "delivery": delivery,
         "risk_buckets": risk_buckets,
-        "model_quality": quality,
+        "model_quality": model_quality,
     }

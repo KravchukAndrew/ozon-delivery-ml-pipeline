@@ -15,5 +15,20 @@ services:
     depends_on:
       - postgres
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: ozon-api
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_URL: postgresql+psycopg2://ozon:ozon@postgres:5432/ozon
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      - postgres
+      - redis
+
 volumes:
   grafana_data:
