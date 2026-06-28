@@ -1,0 +1,16 @@
+apiVersion: 1
+
+datasources:
+  - name: Ozon PostgreSQL
+    uid: ozon_postgres
+    type: postgres
+    access: proxy
+    url: ozon-postgres:5432
+    user: ozon
+    secureJsonData:
+      password: ozon
+    jsonData:
+      database: ozon
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
