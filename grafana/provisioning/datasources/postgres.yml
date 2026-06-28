@@ -5,12 +5,15 @@ datasources:
     uid: ozon_postgres
     type: postgres
     access: proxy
+    orgId: 1
     url: ozon-postgres:5432
     user: ozon
-    secureJsonData:
-      password: ozon
+    isDefault: true
+    editable: true
     jsonData:
       database: ozon
       sslmode: disable
       postgresVersion: 1600
       timescaledb: false
+    secureJsonData:
+      password: ozon
